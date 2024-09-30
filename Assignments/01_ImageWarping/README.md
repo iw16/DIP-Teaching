@@ -23,9 +23,11 @@ Implement MLS or RBF based image deformation in the [Missing Part](run_point_tra
 
 ## Implementation of Image Geometric Transformation
 
-This repository is Yudong Guo's implementation of Assignment_01 of DIP. 
+This repository is Yiqi Wang's implementation of Assignment_01 of DIP. 
 
-<img src="pics/teaser.png" alt="alt text" width="800">
+<img src="results/composite.png" alt="composition of global warpings" width="800">
+
+<img src="results/mls.png" alt="MLS warping" width="800">
 
 ## Requirements
 
@@ -52,10 +54,14 @@ python run_point_transform.py
 
 ## Results (need add more result images)
 ### Basic Transformation
-<img src="pics/global_demo.gif" alt="alt text" width="800">
+<img src="results/scale-only.png" alt="scale only" width="800">
+<img src="results/rotate-only.png" alt="rotate only" width="800">
+<img src="results/move-x-only.png" alt="move x only" width="800">
+<img src="results/flip-x-only.png" alt="flip x only" width="800">
+<img src="results/composite.png" alt="composite" width="800">
 
 ### Point Guided Deformation:
-<img src="pics/point_demo.gif" alt="alt text" width="800">
+<img src="results/mls.png" alt="MLS warping" width="800">
 
 ## Acknowledgement
 

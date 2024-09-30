@@ -1,14 +1,15 @@
 import cv2
-import numpy as np
 import gradio as gr
+import numpy as np
+from numpy.typing import NDArray
 
 # 初始化全局变量，存储控制点和目标点
-points_src = []
-points_dst = []
-image = None
+points_src: list[list[int]] = []
+points_dst: list[list[int]] = []
+image: NDArray[np.uint8] | None = None
 
 # 上传图像时清空控制点和目标点
-def upload_image(img):
+def upload_image(img: NDArray[np.uint8]) -> NDArray[np.uint8]:
     global image, points_src, points_dst
     points_src.clear()  # 清空控制点
     points_dst.clear()  # 清空目标点
@@ -16,7 +17,7 @@ def upload_image(img):
     return img
 
 # 记录点击点事件，并标记点在图像上，同时在成对的点间画箭头
-def record_points(evt: gr.SelectData):
+def record_points(evt: gr.SelectData) -> NDArray[np.uint8]:
     global points_src, points_dst, image
     x, y = evt.index[0], evt.index[1]  # 获取点击的坐标
     
@@ -41,19 +42,50 @@ def record_points(evt: gr.SelectData):
 
 # 执行仿射变换
 
-def point_guided_deformation(image, source_pts, target_pts, alpha=1.0, eps=1e-8):
+def point_guided_deformation(
+    image: NDArray[np.uint8],
+    source_pts: NDArray[np.int32],
+    target_pts: NDArray[np.int32],
+    alpha: float = 1.0,
+    eps: float = 1e-8,
+) -> NDArray[np.uint8]:
     """ 
     Return
     ------
         A deformed image.
     """
-    
-    warped_image = np.array(image)
     ### FILL: 基于MLS or RBF 实现 image warping
-
+    if not target_pts.tolist():
+        return image
+    row, col, chn = image.shape
+    warped_image: NDArray[np.uint8] = np.zeros((row, col, chn), dtype=np.uint8)
+    ys, xs = np.meshgrid(
+        np.arange(row, dtype=np.int16),
+        np.arange(col, dtype=np.int16),
+        indexing='ij',
+    )
+    vs: NDArray[np.int16] = np.stack([ys.ravel(), xs.ravel()], axis=-1)
+    del xs, ys
+    ws: NDArray[np.float32] = np.sum(
+        np.square(vs[:, np.newaxis, :] - source_pts[np.newaxis, :, :]) ** -alpha,
+        axis=2,
+    )
+    pas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * source_pts[np.newaxis, ...], axis=1)
+    qas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * target_pts[np.newaxis, ...], axis=1)
+    phs: NDArray[np.float32] = source_pts[np.newaxis, ...] - pas[:, np.newaxis, ...]
+    qhs: NDArray[np.float32] = target_pts[np.newaxis, ...] - qas[:, np.newaxis, ...]
+    wpqs: NDArray[np.float32] = np.einsum('ij,ijk,ijl->ikl', ws, phs, qhs)
+    wpps: NDArray[np.float32] = np.einsum('ij,ijk,ijl->ikl', ws, phs, phs)
+    mat_ms: NDArray[np.float32] = np.einsum('ijk,ikl->ijl', np.linalg.inv(wpps), wpqs)
+    fa_vs: NDArray[np.float32] = np.einsum('ij,ijk->ik', vs - pas, mat_ms) + qas
+    fa_vs = np.round(fa_vs).astype(np.int16)
+    idx_r: NDArray[np.int16] = fa_vs[:, 0].reshape((row, col)).clip(0, row - 1)
+    idx_c: NDArray[np.int16] = fa_vs[:, 1].reshape((row, col)).clip(0, col - 1)
+    warped_image[idx_r, idx_c] = image
+    warped_image[target_pts[:, 1], target_pts[:, 0]] = image[source_pts[:, 1], source_pts[:, 0]]
     return warped_image
 
-def run_warping():
+def run_warping() -> NDArray[np.uint8]:
     global points_src, points_dst, image ### fetch global variables
 
     warped_image = point_guided_deformation(image, np.array(points_src), np.array(points_dst))
@@ -61,7 +93,7 @@ def run_warping():
     return warped_image
 
 # 清除选中点
-def clear_points():
+def clear_points() -> NDArray[np.uint8]:
     global points_src, points_dst
     points_src.clear()
     points_dst.clear()
@@ -89,6 +121,7 @@ with gr.Blocks() as demo:
     run_button.click(run_warping, None, result_image)
     # 点击清除按钮，清空所有已选择的点
     clear_button.click(clear_points, None, point_select)
-    
-# 启动 Gradio 应用
-demo.launch()
+
+if __name__ == '__main__':
+    # 启动 Gradio 应用
+    demo.launch()
