@@ -54,8 +54,6 @@ def point_guided_deformation(
     ------
         A deformed image.
     """
-    print(source_pts)
-    print(target_pts)
     ### FILL: 基于MLS or RBF 实现 image warping
     if not target_pts.tolist():
         return image
@@ -72,7 +70,6 @@ def point_guided_deformation(
         np.square(vs[:, np.newaxis, :] - source_pts[np.newaxis, :, :]) ** -alpha,
         axis=2,
     )
-    print(ws)
     pas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * source_pts[np.newaxis, ...], axis=1)
     qas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * target_pts[np.newaxis, ...], axis=1)
     phs: NDArray[np.float32] = source_pts[np.newaxis, ...] - pas[:, np.newaxis, ...]
@@ -86,32 +83,6 @@ def point_guided_deformation(
     idx_c: NDArray[np.int16] = fa_vs[:, 1].reshape((row, col)).clip(0, col - 1)
     warped_image[idx_r, idx_c] = image
     warped_image[target_pts[:, 1], target_pts[:, 0]] = image[source_pts[:, 1], source_pts[:, 0]]
-    return warped_image
-    for y in range(row):
-        for x in range(col):
-            fa_v: NDArray[np.int32] = np.array([x, y], dtype=np.int32)
-            if fa_v in target_pts:
-                continue
-            ws: NDArray[np.float64] = np.sum(np.square(source_pts - fa_v), axis=1) ** alpha
-            p_ast: NDArray[np.float64] = np.average(source_pts, axis=0, weights=ws)
-            q_ast: NDArray[np.float64] = np.average(target_pts, axis=0, weights=ws)
-            p_hat: NDArray[np.float64] = source_pts - p_ast
-            q_hat: NDArray[np.float64] = target_pts - q_ast
-            s_wpq: NDArray[np.float64] = np.sum([
-                w * (p_i.reshape((2, 1)) @ q_i.reshape((1, 2))) for w, p_i, q_i in zip(ws, p_hat, q_hat)
-            ], axis=0)
-            s_wpp: NDArray[np.float64] = np.sum([
-                w * (p_i.reshape((2, 1)) @ p_i.reshape((1, 2))) for w, p_i in zip(ws, p_hat)
-            ], axis=0)
-            #s_wpq: NDArray[np.float64] = np.sum(ws * np.matmul(p_hat.reshape((-1, 2, 1)), q_hat.reshape((-1, 1, 2)), axes=[1, 2]), axis=0)
-            #s_wpp: NDArray[np.float64] = np.sum(ws * np.matmul(p_hat.reshape((-1, 2, 1)), p_hat.reshape((-1, 1, 2)), axes=[1, 2]), axis=0)
-            del p_hat, q_hat
-            mat_m: NDArray[np.float64] = np.linalg.inv(s_wpq) @ s_wpp
-            del s_wpq, s_wpp
-            v: NDArray[np.float64] = (fa_v - q_ast) @ mat_m + q_ast
-            del mat_m, p_ast, q_ast
-            v = np.round(v.clip(min=0, max=(row - 1, col - 1))).astype(np.int32)
-            warped_image[y, x] = image[*v]
     return warped_image
 
 def run_warping() -> NDArray[np.uint8]:
