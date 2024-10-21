@@ -44,8 +44,8 @@ def record_points(evt: gr.SelectData) -> NDArray[np.uint8]:
 
 def point_guided_deformation(
     image: NDArray[np.uint8],
-    source_pts: NDArray[np.int32],
-    target_pts: NDArray[np.int32],
+    source_pts: NDArray[np.int16],
+    target_pts: NDArray[np.int16],
     alpha: float = 1.0,
     eps: float = 1e-8,
 ) -> NDArray[np.uint8]:
@@ -59,23 +59,23 @@ def point_guided_deformation(
         return image
     row, col, chn = image.shape
     warped_image: NDArray[np.uint8] = np.zeros((row, col, chn), dtype=np.uint8)
-    ys, xs = np.meshgrid(
+    rs, cs = np.meshgrid(
         np.arange(row, dtype=np.int16),
         np.arange(col, dtype=np.int16),
         indexing='ij',
     )
-    vs: NDArray[np.int16] = np.stack([ys.ravel(), xs.ravel()], axis=-1)
-    del xs, ys
-    ws: NDArray[np.float32] = np.sum(
-        np.square(vs[:, np.newaxis, :] - source_pts[np.newaxis, :, :]) ** -alpha,
+    vs: NDArray[np.int16] = np.stack([rs.ravel(), cs.ravel()], axis=-1)
+    del cs, rs
+    ws: NDArray[np.float32] = np.sum(np.sum(
+        np.square(vs[:, np.newaxis, :] - source_pts[np.newaxis, :, :]),
         axis=2,
-    )
-    pas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * source_pts[np.newaxis, ...], axis=1)
-    qas: NDArray[np.float32] = np.sum(ws[..., np.newaxis] * target_pts[np.newaxis, ...], axis=1)
+    ) ** -alpha, axis=1)
+    pas: NDArray[np.float32] = np.sum(ws[..., np.newaxis, np.newaxis] * source_pts[np.newaxis, ...], axis=1)
+    qas: NDArray[np.float32] = np.sum(ws[..., np.newaxis, np.newaxis] * target_pts[np.newaxis, ...], axis=1)
     phs: NDArray[np.float32] = source_pts[np.newaxis, ...] - pas[:, np.newaxis, ...]
     qhs: NDArray[np.float32] = target_pts[np.newaxis, ...] - qas[:, np.newaxis, ...]
-    wpqs: NDArray[np.float32] = np.einsum('ij,ijk,ijl->ikl', ws, phs, qhs)
-    wpps: NDArray[np.float32] = np.einsum('ij,ijk,ijl->ikl', ws, phs, phs)
+    wpqs: NDArray[np.float32] = np.einsum('i,ijk,ijl->ikl', ws, phs, qhs)
+    wpps: NDArray[np.float32] = np.einsum('i,ijk,ijl->ikl', ws, phs, phs)
     mat_ms: NDArray[np.float32] = np.einsum('ijk,ikl->ijl', np.linalg.inv(wpps), wpqs)
     fa_vs: NDArray[np.float32] = np.einsum('ij,ijk->ik', vs - pas, mat_ms) + qas
     fa_vs = np.round(fa_vs).astype(np.int16)
