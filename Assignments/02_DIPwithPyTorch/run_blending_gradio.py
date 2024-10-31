@@ -1,7 +1,15 @@
+import cv2
 import gradio as gr
 from PIL import ImageDraw
 import numpy as np
 import torch
+import torch.nn.functional as F
+from numpy.typing import NDArray
+
+if torch.cuda.is_available():
+    torch.set_default_device('cuda:0')
+else:
+    torch.set_default_device('cpu')
 
 # Initialize the polygon state
 def initialize_polygon():
@@ -93,7 +101,11 @@ def update_background(background_image_original, polygon_state, dx, dy):
         return background_image_original
 
 # Create a binary mask from polygon points
-def create_mask_from_points(points, img_h, img_w):
+def create_mask_from_points(
+    points: NDArray[np.uint8],
+    img_h: int,
+    img_w: int,
+) -> NDArray[np.uint8]:
     """
     Creates a binary mask from the given polygon points.
 
@@ -105,15 +117,20 @@ def create_mask_from_points(points, img_h, img_w):
     Returns:
         np.ndarray: Binary mask of shape (img_h, img_w).
     """
-    mask = np.zeros((img_h, img_w), dtype=np.uint8)
-    ### FILL: Obtain Mask from Polygon Points. 
+    mask: NDArray[np.uint8] = np.zeros((img_h, img_w), dtype=np.uint8)
+    ### Obtain Mask from Polygon Points. 
     ### 0 indicates outside the Polygon.
     ### 255 indicates inside the Polygon.
-
+    cv2.fillPoly(mask, [points], color=255)
     return mask
 
 # Calculate the Laplacian loss between the foreground and blended image
-def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_mask):
+def cal_laplacian_loss(
+    foreground_img: torch.Tensor,
+    foreground_mask: torch.Tensor,
+    blended_img: torch.Tensor,
+    background_mask: torch.Tensor,
+) -> torch.Tensor: # scalar
     """
     Computes the Laplacian loss between the foreground and blended images within the masks.
 
@@ -126,10 +143,18 @@ def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_
     Returns:
         torch.Tensor: The computed Laplacian loss.
     """
-    loss = torch.tensor(0.0, device=foreground_img.device)
-    ### FILL: Compute Laplacian Loss with https://pytorch.org/docs/stable/generated/torch.nn.functional.conv2d.html.
+    ### Compute Laplacian Loss with https://pytorch.org/docs/stable/generated/torch.nn.functional.conv2d.html.
     ### Note: The loss is computed within the masks.
-
+    lpls_ker: torch.Tensor = torch.tensor([
+        [0, -1, 0],
+        [-1, 4, -1],
+        [0, -1, 0],
+    ], dtype=torch.float32, device=foreground_img.device).broadcast_to((1, 3, 3, 3))
+    lpls_fg: torch.Tensor = F.conv2d(foreground_img, lpls_ker, padding='same')
+    lpls_bg: torch.Tensor = F.conv2d(blended_img, lpls_ker, padding='same')
+    fg_masked: torch.Tensor = torch.masked_select(lpls_fg, foreground_mask != 0)
+    bg_masked: torch.Tensor = torch.masked_select(lpls_bg, background_mask != 0)
+    loss: torch.Tensor = F.mse_loss(fg_masked, bg_masked)
     return loss
 
 # Perform Poisson image blending

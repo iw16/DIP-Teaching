@@ -1,4 +1,6 @@
 import os
+import time
+
 import cv2
 import numpy as np
 import torch
@@ -41,7 +43,7 @@ def save_images(inputs, targets, outputs, folder_name, epoch, num_images=5):
         epoch (int): Current epoch number.
         num_images (int): Number of images to save from the batch.
     """
-    os.makedirs(f'{folder_name}/epoch_{epoch}', exist_ok=True)
+    os.makedirs(f'{folder_name}/epoch_{epoch:03d}', exist_ok=True)
     for i in range(num_images):
         # Convert tensors to images
         input_img_np = tensor_to_image(inputs[i])
@@ -52,7 +54,7 @@ def save_images(inputs, targets, outputs, folder_name, epoch, num_images=5):
         comparison = np.hstack((input_img_np, target_img_np, output_img_np))
 
         # Save the comparison image
-        cv2.imwrite(f'{folder_name}/epoch_{epoch}/result_{i + 1}.png', comparison)
+        cv2.imwrite(f'{folder_name}/epoch_{epoch:03d}/result_{i + 1}.png', comparison)
 
 def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch, num_epochs):
     """
@@ -83,7 +85,9 @@ def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch, num_
 
         # Save sample images every 5 epochs
         if epoch % 5 == 0 and i == 0:
-            save_images(image_rgb, image_semantic, outputs, 'train_results', epoch)
+            cwd: str = os.path.dirname(__file__)
+            save_dir: str = os.path.join(cwd, 'train_results')
+            save_images(image_rgb, image_semantic, outputs, save_dir, epoch)
 
         # Compute the loss
         loss = criterion(outputs, image_semantic)
@@ -96,7 +100,7 @@ def train_one_epoch(model, dataloader, optimizer, criterion, device, epoch, num_
         running_loss += loss.item()
 
         # Print loss information
-        print(f'Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], Loss: {loss.item():.4f}')
+        #print(f'{epoch}th epoch, step [{i + 1}/{len(dataloader)}], loss: {loss.item():.4f}')
 
 def validate(model, dataloader, criterion, device, epoch, num_epochs):
     """
@@ -127,26 +131,37 @@ def validate(model, dataloader, criterion, device, epoch, num_epochs):
             val_loss += loss.item()
 
             # Save sample images every 5 epochs
-            if epoch % 5 == 0 and i == 0:
-                save_images(image_rgb, image_semantic, outputs, 'val_results', epoch)
+            if (epoch + 1) % 5 == 0 and i == 0:
+                cwd: str = os.path.dirname(__file__)
+                save_dir: str = os.path.join(cwd, 'val_results')
+                save_images(image_rgb, image_semantic, outputs, save_dir, epoch)
 
     # Calculate average validation loss
     avg_val_loss = val_loss / len(dataloader)
-    print(f'Epoch [{epoch + 1}/{num_epochs}], Validation Loss: {avg_val_loss:.4f}')
+    print(f'{epoch}th epoch, validation loss: {avg_val_loss:.4f}')
 
-def main():
+def main() -> None:
     """
     Main function to set up the training and validation processes.
     """
+    t0_total: float = time.perf_counter()
+    cwd: str = os.path.dirname(__file__)
     # Set device to GPU if available
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    if torch.cuda.is_available():
+        device = torch.device('cuda:0')
+        print('using GPU')
+    else:
+        device = torch.device('cpu')
+        print('using CPU')
+    torch.set_default_device(device)
 
     # Initialize datasets and dataloaders
-    train_dataset = FacadesDataset(list_file='train_list.txt')
-    val_dataset = FacadesDataset(list_file='val_list.txt')
+    train_dataset = FacadesDataset(list_file=os.path.join(cwd, 'train_list.txt'))
+    val_dataset = FacadesDataset(list_file=os.path.join(cwd, 'val_list.txt'))
 
-    train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=4, generator=torch.Generator(device))
+    val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=4, generator=torch.Generator(device))
 
     # Initialize model, loss function, and optimizer
     model = FullyConvNetwork().to(device)
@@ -158,17 +173,29 @@ def main():
 
     # Training loop
     num_epochs = 800
+    t1_total: float = time.perf_counter()
+    print(f'Prepared for {num_epochs} epochs, {(t1_total - t0_total):.3f} s taken')
     for epoch in range(num_epochs):
+        t0: float = time.perf_counter()
         train_one_epoch(model, train_loader, optimizer, criterion, device, epoch, num_epochs)
         validate(model, val_loader, criterion, device, epoch, num_epochs)
 
         # Step the scheduler after each epoch
         scheduler.step()
 
+        t1: float = time.perf_counter()
+        print(f'{epoch}th epoch completed, {(t1 - t0):.3f} s taken')
+
         # Save model checkpoint every 20 epochs
         if (epoch + 1) % 20 == 0:
-            os.makedirs('checkpoints', exist_ok=True)
-            torch.save(model.state_dict(), f'checkpoints/pix2pix_model_epoch_{epoch + 1}.pth')
+            chkpt_dir: str = os.path.join(cwd, 'checkpoints')
+            os.makedirs(chkpt_dir, exist_ok=True)
+            chkpt_path: str = os.path.join(chkpt_dir, f'pix2pix_model_epoch_{(epoch + 1):03d}.pth')
+            torch.save(model.state_dict(), chkpt_path)
+            print(f'Checkpoint saved as "{chkpt_path}"')
+
+    t2_total: float = time.perf_counter()
+    print(f'Training completed, {(t2_total - t0_total):.3f} s taken, models saved in {chkpt_dir}')
 
 if __name__ == '__main__':
     main()
