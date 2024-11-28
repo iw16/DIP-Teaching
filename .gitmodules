@@ -1,0 +1,6 @@
+[submodule "Assignments/03_PlayWithGANs/DragGAN2"]
+	path = Assignments/03_PlayWithGANs/facegan/DragGAN2
+	url = ssh://git@github.com/OpenGVLab/DragGAN.git
+[submodule "Assignments/03_PlayWithGANs/face-alignment"]
+	path = Assignments/03_PlayWithGANs/facegan/face_alignment/
+	url = ssh://git@github.com/1adrianb/face-alignment.git
