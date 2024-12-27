@@ -174,6 +174,10 @@ class GaussianTrainer:
 
         # Compute RGB loss
         loss = torch.abs(rendered_images - images).mean()
+        # TODO: debugging
+        #print(rendered_images.dtype, rendered_images.shape, rendered_images.max())
+        #print(images.dtype, images.shape, images.max())
+        #os._exit(17)
         
         # Backward pass
         self.optimizer.zero_grad()

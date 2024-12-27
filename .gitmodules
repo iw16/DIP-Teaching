@@ -4,3 +4,6 @@
 [submodule "Assignments/03_PlayWithGANs/face-alignment"]
 	path = Assignments/03_PlayWithGANs/facegan/face_alignment/
 	url = ssh://git@github.com/1adrianb/face-alignment.git
+[submodule "Assignments/04_3DGS/gaussian-splatting"]
+	path = Assignments/04_3DGS/gaussian-splatting
+	url = ssh://git@github.com/graphdeco-inria/gaussian-splatting.git

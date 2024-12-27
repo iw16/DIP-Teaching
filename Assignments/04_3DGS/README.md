@@ -1,5 +1,17 @@
 # Assignment 4 - Implement Simplified 3D Gaussian Splatting
 
+## Requirements
+
+To install requirements on Linux:
+
+```bash
+cd path/to/04_PlayWithGANs
+conda env create -f environment.yml
+conda activate 3DGS
+```
+
+## Descriptions
+
 This assignment covers a complete pipeline for reconstructing a 3D scene represented by 3DGS from multi-view images. The following steps use the [chair folder](data/chair); you can use any other folder by placing images/ in it.
 
 ### Resources:
@@ -73,3 +85,24 @@ python train.py --colmap_dir data/chair --checkpoint_dir data/chair/checkpoints
 ### Compare with the original 3DGS Implementation
 Since we use a pure PyTorch implementation, the training speed and GPU memory usage are far from satisfactory. Also, we do not implement some crucial parts like adaptive Gaussian densification scheme. Run the [original 3DGS implementation](https://github.com/graphdeco-inria/gaussian-splatting) with the same dataset to compare the results.
 
+## Results
+
+### PyTorch-only
+
+After 100 epochs:
+
+![After 100 epochs](Assignments/04_3DGS/results/100.png)
+
+After 200 epochs:
+
+![After 200 epochs](Assignments/04_3DGS/results/200.png)
+
+### Original 3DGS
+
+![View 1](Assignments/04_3DGS/results/chair-1.png)
+
+![View 2](Assignments/04_3DGS/results/chair-2.png)
+
+## Acknowledgements
+
+- Thanks to the authors and contributors of [3D Gaussian Splatting](https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/) and [Colmap for SfM](https://colmap.github.io/index.html). 
