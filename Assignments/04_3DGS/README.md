@@ -91,17 +91,17 @@ Since we use a pure PyTorch implementation, the training speed and GPU memory us
 
 After 100 epochs:
 
-![After 100 epochs](Assignments/04_3DGS/results/100.png)
+<img src="results/100.png" alt="After 100 epochs" width="800">
 
 After 200 epochs:
 
-![After 200 epochs](Assignments/04_3DGS/results/200.png)
+<img src="results/100.png" alt="After 100 epochs" width="800">
 
 ### Original 3DGS
 
-![View 1](Assignments/04_3DGS/results/chair-1.png)
+<img src="results/chair-1.png" alt="View 1" width="800">
 
-![View 2](Assignments/04_3DGS/results/chair-2.png)
+<img src="results/chair-2.png" alt="View 2" width="800">
 
 ## Acknowledgements
 

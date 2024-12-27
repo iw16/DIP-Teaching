@@ -40,10 +40,12 @@ python -u train.py > train.log
 ### Results
 
 Validation after 400 epochs:
-![After 400 epochs](Assignments/03_PlayWithGANs/results/after400.png)
+
+<img src="results/after400.png" alt="After 400 epochs" width="800">
 
 Validation after 800 epochs:
-![After 800 epochs](Assignments/03_PlayWithGANs/results/after800.png)
+
+<img src="results/after800.png" alt="After 800 epochs" width="800">
 
 ## DragGAN & Face-Alignment
 
@@ -57,29 +59,29 @@ python -u facegan/combination.py
 
 Original image:
 
-![Original](Assignments/03_PlayWithGANs/results/image_original.png)
+<img src="results/image_original.png" alt="Original" width="800">
 
 Close eyes:
 
-![Close eyes](Assignments/03_PlayWithGANs/results/image_close_eyes.png)
+<img src="results/image_close_eyes.png" alt="Close eyes" width="800">
 
 Expand eyes:
 
-![Expand eyes](Assignments/03_PlayWithGANs/results/image_expand_eyes.png)
+<img src="results/image_expand_eyes.png" alt="Expand eyes" width="800">
 
 Close lips:
 
-![Close lips](Assignments/03_PlayWithGANs/results/image_close_lips.png)
+<img src="results/image_close_lips.png" alt="Close lips" width="800">
 
 Smile mouth:
 
-![Smile mouth](Assignments/03_PlayWithGANs/results/image_smile_mouth.png)
+<img src="results/image_smile_mouth.png" alt="Smile mouth" width="800">
 
 Slim face:
 
-![Slim face](Assignments/03_PlayWithGANs/results/image_slim_face.png)
+<img src="results/image_slim_face.png" alt="Slim face" width="800">
 
-Dynamically changing videos are [here](Assignments/03_PlayWithGANs/results). 
+Dynamically changing videos are [here](results/). 
 
 ## Contributing
 

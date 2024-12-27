@@ -14,9 +14,9 @@ pip install -r requirements.txt
 
 ### Results
 
-![Source & Target](Assignments/02_DIPwithPyTorch/results/srcs.png)
+<img src="results/srcs.png" alt="Source & Target" width="800">
 
-![Source & Target](Assignments/02_DIPwithPyTorch/results/blended.png)
+<img src="results/blended.png" alt="Source & Target" width="800">
 
 ## Deep Learning-Based Pix2Pix
 
@@ -49,10 +49,12 @@ A pre-trained model can be downloaded [here](https://github.com/iw16/DIP-Teachin
 ### Results
 
 Validation after 400 epochs:
-![After 400 epochs](Assignments/02_DIPwithPyTorch/results/after400.png)
+
+<img src="results/after400.png" alt="After 400 epochs" width="800">
 
 Validation after 800 epochs:
-![After 800 epochs](Assignments/02_DIPwithPyTorch/results/after800.png)
+
+<img src="results/after800.png" alt="After 800 epochs" width="800">
 
 ### Contributing
 
